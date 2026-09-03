@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Miramont Time" />
+  <title>Miramont Time Clock</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;background:#f5f5f7}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#f5f5f7}
+    button,input{font:inherit} .app{min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+    header{display:flex;justify-content:space-between;align-items:center;padding:22px 28px;background:white;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:10}
+    .brand{font-size:30px;font-weight:900;letter-spacing:4px} .gear{border:0;background:transparent;font-size:28px;cursor:pointer}
+    main{width:min(900px,100%);margin:0 auto;padding:36px 24px 48px} .clock{text-align:center;color:#666;margin-bottom:24px;font-size:20px}
+    .cloud{text-align:center;font-size:13px;color:#666;margin-top:-14px;margin-bottom:18px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px}
+    .action{min-height:130px;border-radius:24px;border:2px solid transparent;background:white;font-size:28px;font-weight:800;cursor:pointer}
+    .action.active{border-color:#111;background:#ececec} .prompt{text-align:center;font-size:26px;font-weight:700;margin-bottom:12px}
+    .pin-display{text-align:center;font-size:42px;min-height:60px;letter-spacing:10px;margin-bottom:18px}
+    .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:520px;margin:0 auto}
+    .key{min-height:76px;border:0;border-radius:18px;background:white;font-size:30px;font-weight:800;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+    .message{min-height:76px;margin-top:22px;text-align:center;font-size:25px;font-weight:800;white-space:pre-line}
+    .message.error{color:#b00020} dialog{width:min(760px,94vw);max-height:88vh;border:0;border-radius:20px;padding:0;overflow:auto}
+    dialog::backdrop{background:rgba(0,0,0,.35)} .modal{padding:24px;background:white} .modal h2{margin-top:0}
+    input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #bbb;margin-bottom:12px}
+    .primary,.secondary{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer} .primary{background:#111;color:white} .secondary{background:#eee}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 22px} table{width:100%;border-collapse:collapse;font-size:15px}
+    th,td{padding:10px 8px;border-bottom:1px solid #eee;text-align:left} th{font-size:13px;color:#666}
+    @media(max-width:650px){.actions{grid-template-columns:1fr}.brand{font-size:24px}main{padding:24px 16px 40px}}
+  </style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">MIRAMONT</div><button class="gear" id="adminBtn">⚙️</button></header>
+<main>
+  <div class="clock" id="clock"></div>
+  <div class="cloud" id="cloudStatus">Cloud database connected</div>
+  <div class="actions">
+    <button class="action active" data-action="clockIn">CLOCK IN</button>
+    <button class="action" data-action="clockOut">CLOCK OUT</button>
+  </div>
+  <div class="prompt" id="prompt">Enter PIN to Clock In</div>
+  <div class="pin-display" id="pinDisplay">••••</div>
+  <div class="keypad" id="keypad"></div>
+  <div class="message" id="message"></div>
+</main>
+</div>
+
+<dialog id="adminLoginDialog">
+<div class="modal">
+  <h2>Admin Access</h2>
+  <input id="adminPinInput" inputmode="numeric" type="password" placeholder="Admin PIN"/>
+  <div class="toolbar">
+    <button class="primary" id="adminUnlockBtn">Unlock</button>
+    <button class="secondary" id="loginCancel">Cancel</button>
+  </div>
+  <div id="adminLoginError" class="message error" style="font-size:16px;min-height:0"></div>
+</div>
+</dialog>
+
+<dialog id="adminDialog">
+<div class="modal">
+  <h2>Miramont Time Admin</h2>
+  <div class="toolbar">
+    <button class="primary" id="refreshAdmin">Refresh</button>
+    <button class="secondary" id="adminClose">Close</button>
+  </div>
+  <h3>This Week — Cloud</h3>
+  <div id="weeklySummary">Loading...</div>
+</div>
+</dialog>
+
+<script>
+const SUPABASE_URL = 'https://kmggowfrdezocrycxabz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DCZAcI8FhaLAlfm3CsoD9A_VmgwAPvu';
+const ADMIN_PIN = '7391';
+let action='clockIn', pin='', busy=false;
+
+function headers() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+  };
+}
+
+async function rpc(name, body={}) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method:'POST', headers:headers(), body:JSON.stringify(body)
+  });
+  const text = await r.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (!r.ok) {
+    const msg = data?.message || data?.hint || data?.details || text || `HTTP ${r.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function renderPin() {
+  pinDisplay.textContent = pin ? '•'.repeat(pin.length) : '••••';
+}
+
+function renderAction() {
+  document.querySelectorAll('.action').forEach(b=>b.classList.toggle('active',b.dataset.action===action));
+  prompt.textContent = action==='clockIn' ? 'Enter PIN to Clock In' : 'Enter PIN to Clock Out';
+}
+
+['1','2','3','4','5','6','7','8','9','⌫','0','GO'].forEach(k=>{
+  const b=document.createElement('button');
+  b.className='key'; b.textContent=k;
+  b.onclick=()=>{
+    if (busy) return;
+    if(k==='⌫') pin=pin.slice(0,-1);
+    else if(k==='GO') submitPunch();
+    else if(pin.length<8) pin+=k;
+    renderPin();
+  };
+  keypad.appendChild(b);
+});
+
+document.querySelectorAll('.action').forEach(b=>b.onclick=()=>{
+  if (busy) return;
+  action=b.dataset.action; pin=''; message.textContent=''; renderPin(); renderAction();
+});
+
+async function submitPunch() {
+  if (!pin || busy) return;
+  busy=true;
+  message.className='message';
+  message.textContent='Saving to cloud...';
+  const enteredPin=pin;
+  pin=''; renderPin();
+  try {
+    const data = await rpc('clock_by_pin', {p_pin:enteredPin, p_punch_type:action});
+    const row = Array.isArray(data) ? data[0] : data;
+    const when = new Date(row.punched_at);
+    message.textContent = `✓ ${row.employee_name.toUpperCase()}\n${row.punch_type==='clockIn'?'CLOCKED IN':'CLOCKED OUT'} • ${when.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;
+    cloudStatus.textContent='✓ Saved to cloud';
+    setTimeout(()=>{message.textContent=''; action='clockIn'; renderAction(); cloudStatus.textContent='Cloud database connected';},3000);
+  } catch(e) {
+    message.classList.add('error');
+    message.textContent=e.message.replace(/^.*?:\s*/,'');
+    cloudStatus.textContent='Cloud connection error';
+  } finally {
+    busy=false;
+  }
+}
+
+function tick() {
+  clock.textContent=new Date().toLocaleString([],{dateStyle:'full',timeStyle:'short'});
+}
+setInterval(tick,1000); tick();
+
+async function renderAdmin() {
+  weeklySummary.textContent='Loading...';
+  try {
+    const rows = await rpc('weekly_summary');
+    weeklySummary.innerHTML = `<table>
+      <thead><tr><th>Employee</th><th>Status</th><th>Regular</th><th>OT</th><th>Total</th><th>Rate</th><th>Est. Gross</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td>${escapeHtml(r.employee_name)}</td>
+        <td>${escapeHtml(r.current_status)}</td>
+        <td>${Number(r.regular_hours).toFixed(2)}</td>
+        <td>${Number(r.overtime_hours).toFixed(2)}</td>
+        <td><strong>${Number(r.total_hours).toFixed(2)}</strong></td>
+        <td>${Number(r.hourly_rate).toLocaleString(undefined,{style:'currency',currency:'USD'})}</td>
+        <td>${Number(r.estimated_gross).toLocaleString(undefined,{style:'currency',currency:'USD'})}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch(e) {
+    weeklySummary.innerHTML=`<div class="message error" style="font-size:16px">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+adminBtn.onclick=()=>{adminPinInput.value='';adminLoginError.textContent='';adminLoginDialog.showModal()};
+loginCancel.onclick=()=>adminLoginDialog.close();
+adminClose.onclick=()=>adminDialog.close();
+refreshAdmin.onclick=renderAdmin;
+adminUnlockBtn.onclick=()=>{
+  if(adminPinInput.value===ADMIN_PIN){adminLoginDialog.close();adminDialog.showModal();renderAdmin();}
+  else adminLoginError.textContent='Incorrect admin PIN';
+};
+
+renderPin(); renderAction();
+</script>
+</body>
+</html>
