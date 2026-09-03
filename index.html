@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Miramont Time" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Miramont Time Clock</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #111;
+      background: #f5f5f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f5f5f7;
+    }
+    button, input { font: inherit; }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 28px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 4px;
+    }
+    .gear {
+      border: 0;
+      background: transparent;
+      font-size: 28px;
+      cursor: pointer;
+    }
+    main {
+      width: min(900px, 100%);
+      margin: 0 auto;
+      padding: 36px 24px 48px;
+    }
+    .clock {
+      text-align: center;
+      color: #666;
+      margin-bottom: 24px;
+      font-size: 20px;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .action {
+      min-height: 130px;
+      border-radius: 24px;
+      border: 2px solid transparent;
+      background: white;
+      font-size: 28px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .action.active {
+      border-color: #111;
+      background: #ececec;
+    }
+    .prompt {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .pin-display {
+      text-align: center;
+      font-size: 42px;
+      min-height: 60px;
+      letter-spacing: 10px;
+      margin-bottom: 18px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .key {
+      min-height: 76px;
+      border: 0;
+      border-radius: 18px;
+      background: white;
+      font-size: 30px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .message {
+      min-height: 76px;
+      margin-top: 22px;
+      text-align: center;
+      font-size: 25px;
+      font-weight: 800;
+      white-space: pre-line;
+    }
+    .message.error { color: #b00020; }
+
+    dialog {
+      width: min(760px, 94vw);
+      max-height: 88vh;
+      border: 0;
+      border-radius: 20px;
+      padding: 0;
+      overflow: auto;
+    }
+    dialog::backdrop { background: rgba(0,0,0,.35); }
+    .modal {
+      padding: 24px;
+      background: white;
+    }
+    .modal h2 { margin-top: 0; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid #bbb;
+      margin-bottom: 12px;
+    }
+    .primary, .secondary, .danger {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .primary { background: #111; color: white; }
+    .secondary { background: #eee; }
+    .danger { background: #fbe9e9; color: #8b0000; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 22px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    th { font-size: 13px; color: #666; }
+    .employee-card {
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .employee-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 800;
+    }
+    .small { color: #666; font-size: 13px; }
+    @media (max-width: 650px) {
+      .actions { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+      .brand { font-size: 24px; }
+      main { padding: 24px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">MIRAMONT</div>
+    <button class="gear" id="adminBtn" aria-label="Admin">⚙️</button>
+  </header>
+
+  <main>
+    <div class="clock" id="clock"></div>
+
+    <div class="actions">
+      <button class="action active" data-action="clockIn">CLOCK IN</button>
+      <button class="action" data-action="clockOut">CLOCK OUT</button>
+    </div>
+
+    <div class="prompt" id="prompt">Enter PIN to Clock In</div>
+    <div class="pin-display" id="pinDisplay">••••</div>
+
+    <div class="keypad" id="keypad"></div>
+    <div class="message" id="message"></div>
+  </main>
+</div>
+
+<dialog id="adminLoginDialog">
+  <div class="modal">
+    <h2>Admin Access</h2>
+    <input id="adminPinInput" inputmode="numeric" type="password" placeholder="Admin PIN" />
+    <div class="toolbar">
+      <button class="primary" id="adminUnlockBtn">Unlock</button>
+      <button class="secondary" onclick="adminLoginDialog.close()">Cancel</button>
+    </div>
+    <div class="small">Prototype admin PIN: 7391</div>
+    <div id="adminLoginError" class="message error" style="font-size:16px;min-height:0;"></div>
+  </div>
+</dialog>
+
+<dialog id="adminDialog">
+  <div class="modal">
+    <h2>Miramont Time Admin</h2>
+
+    <div class="toolbar">
+      <button class="primary" id="exportBtn">Export Payroll CSV</button>
+      <button class="secondary" id="resetPrototypeBtn">Reset Prototype Data</button>
+      <button class="secondary" onclick="adminDialog.close()">Close</button>
+    </div>
+
+    <h3>This Week</h3>
+    <div id="weeklySummary"></div>
+
+    <h3>Add Employee</h3>
+    <div class="row">
+      <input id="empName" placeholder="Employee name" />
+      <input id="empPin" inputmode="numeric" placeholder="PIN" />
+    </div>
+    <div class="row">
+      <input id="empRate" inputmode="decimal" placeholder="Hourly rate" />
+      <button class="primary" id="addEmployeeBtn">Add Employee</button>
+    </div>
+    <div id="employeeError" class="message error" style="font-size:16px;min-height:0;"></div>
+
+    <h3>Employees</h3>
+    <div id="employeeList"></div>
+  </div>
+</dialog>
+
+<script>
+const EMPLOYEE_KEY = 'miramont_web_employees_v1';
+const PUNCH_KEY = 'miramont_web_punches_v1';
+
+let action = 'clockIn';
+let pin = '';
+
+function seedEmployees() {
+  return [
+    { id: crypto.randomUUID(), name: 'Carlos', pin: '1111', rate: 22, active: true },
+    { id: crypto.randomUUID(), name: 'Andres', pin: '2222', rate: 24, active: true }
+  ];
+}
+
+function getEmployees() {
+  const raw = localStorage.getItem(EMPLOYEE_KEY);
+  if (!raw) {
+    const seeded = seedEmployees();
+    localStorage.setItem(EMPLOYEE_KEY, JSON.stringify(seeded));
+    return seeded;
+  }
+  return JSON.parse(raw);
+}
+
+function setEmployees(v) {
+  localStorage.setItem(EMPLOYEE_KEY, JSON.stringify(v));
+}
+
+function getPunches() {
+  return JSON.parse(localStorage.getItem(PUNCH_KEY) || '[]');
+}
+
+function setPunches(v) {
+  localStorage.setItem(PUNCH_KEY, JSON.stringify(v));
+}
+
+function latestPunch(employeeId) {
+  return getPunches()
+    .filter(p => p.employeeId === employeeId)
+    .sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp))[0] || null;
+}
+
+function buildKeypad() {
+  const keypad = document.getElementById('keypad');
+  keypad.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','⌫','0','GO'].forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'key';
+    b.textContent = k;
+    b.onclick = () => {
+      if (k === '⌫') pin = pin.slice(0, -1);
+      else if (k === 'GO') submitPunch();
+      else if (pin.length < 8) pin += k;
+      renderPin();
+    };
+    keypad.appendChild(b);
+  });
+}
+
+function renderPin() {
+  const display = document.getElementById('pinDisplay');
+  display.textContent = pin ? '•'.repeat(pin.length) : '••••';
+}
+
+function renderAction() {
+  document.querySelectorAll('.action').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.action === action);
+  });
+  document.getElementById('prompt').textContent =
+    action === 'clockIn' ? 'Enter PIN to Clock In' : 'Enter PIN to Clock Out';
+}
+
+function submitPunch() {
+  const employees = getEmployees();
+  const emp = employees.find(e => e.active && e.pin === pin);
+  const msg = document.getElementById('message');
+  msg.className = 'message';
+
+  if (!emp) {
+    msg.classList.add('error');
+    msg.textContent = 'PIN not recognized';
+    pin = '';
+    renderPin();
+    return;
+  }
+
+  const latest = latestPunch(emp.id);
+  if (action === 'clockIn' && latest?.type === 'clockIn') {
+    msg.classList.add('error');
+    msg.textContent = 'You are already clocked in.';
+    pin = '';
+    renderPin();
+    return;
+  }
+  if (action === 'clockOut' && latest?.type !== 'clockIn') {
+    msg.classList.add('error');
+    msg.textContent = 'You must clock in first.';
+    pin = '';
+    renderPin();
+    return;
+  }
+
+  const punches = getPunches();
+  const now = new Date();
+  punches.push({
+    id: crypto.randomUUID(),
+    employeeId: emp.id,
+    timestamp: now.toISOString(),
+    type: action
+  });
+  setPunches(punches);
+
+  msg.textContent = `✓ ${emp.name.toUpperCase()}\n${action === 'clockIn' ? 'CLOCKED IN' : 'CLOCKED OUT'} • ${now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+  pin = '';
+  renderPin();
+
+  setTimeout(() => {
+    msg.textContent = '';
+    action = 'clockIn';
+    renderAction();
+  }, 3000);
+}
+
+document.querySelectorAll('.action').forEach(btn => {
+  btn.onclick = () => {
+    action = btn.dataset.action;
+    pin = '';
+    document.getElementById('message').textContent = '';
+    renderPin();
+    renderAction();
+  };
+});
+
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString([], { dateStyle: 'full', timeStyle: 'short' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function startOfWeek(d = new Date()) {
+  const x = new Date(d);
+  const day = x.getDay(); // Sunday 0
+  const diff = (day + 6) % 7; // Monday start
+  x.setHours(0,0,0,0);
+  x.setDate(x.getDate() - diff);
+  return x;
+}
+function endOfWeek(d = new Date()) {
+  const s = startOfWeek(d);
+  const e = new Date(s);
+  e.setDate(e.getDate() + 7);
+  return e;
+}
+function hoursWorked(employeeId, start, end) {
+  const events = getPunches()
+    .filter(p => p.employeeId === employeeId && new Date(p.timestamp) >= start && new Date(p.timestamp) < end)
+    .sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  let totalMs = 0;
+  let clockIn = null;
+  for (const p of events) {
+    const t = new Date(p.timestamp);
+    if (p.type === 'clockIn') clockIn = t;
+    else if (p.type === 'clockOut' && clockIn && t > clockIn) {
+      totalMs += t - clockIn;
+      clockIn = null;
+    }
+  }
+  if (clockIn) totalMs += Math.max(0, Math.min(Date.now(), end.getTime()) - clockIn.getTime());
+  return totalMs / 3600000;
+}
+
+function weeklyRows() {
+  const start = startOfWeek(), end = endOfWeek();
+  return getEmployees().filter(e => e.active).map(e => {
+    const total = hoursWorked(e.id, start, end);
+    const regular = Math.min(total, 40);
+    const ot = Math.max(total - 40, 0);
+    const gross = regular * e.rate + ot * e.rate * 1.5;
+    return { e, total, regular, ot, gross };
+  }).sort((a,b) => a.e.name.localeCompare(b.e.name));
+}
+
+function renderAdmin() {
+  const rows = weeklyRows();
+  document.getElementById('weeklySummary').innerHTML = `
+    <table>
+      <thead><tr><th>Employee</th><th>Regular</th><th>OT</th><th>Total</th><th>Rate</th><th>Est. Gross</th></tr></thead>
+      <tbody>${rows.map(r => `
+        <tr>
+          <td>${escapeHtml(r.e.name)}</td>
+          <td>${r.regular.toFixed(2)}</td>
+          <td>${r.ot.toFixed(2)}</td>
+          <td><strong>${r.total.toFixed(2)}</strong></td>
+          <td>$${Number(r.e.rate).toFixed(2)}</td>
+          <td>$${r.gross.toFixed(2)}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+
+  document.getElementById('employeeList').innerHTML =
+    getEmployees().filter(e => e.active).map(e => {
+      const latest = latestPunch(e.id);
+      const status = latest?.type === 'clockIn' ? 'CLOCKED IN' : 'OFF';
+      return `<div class="employee-card">
+        <div class="employee-title">
+          <span>${escapeHtml(e.name)}</span>
+          <span>${status}</span>
+        </div>
+        <div class="small">$${Number(e.rate).toFixed(2)}/hr • PIN ${escapeHtml(e.pin)}</div>
+      </div>`;
+    }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+const adminLoginDialog = document.getElementById('adminLoginDialog');
+const adminDialog = document.getElementById('adminDialog');
+
+document.getElementById('adminBtn').onclick = () => {
+  document.getElementById('adminPinInput').value = '';
+  document.getElementById('adminLoginError').textContent = '';
+  adminLoginDialog.showModal();
+};
+
+document.getElementById('adminUnlockBtn').onclick = () => {
+  if (document.getElementById('adminPinInput').value === '7391') {
+    adminLoginDialog.close();
+    renderAdmin();
+    adminDialog.showModal();
+  } else {
+    document.getElementById('adminLoginError').textContent = 'Incorrect admin PIN';
+  }
+};
+
+document.getElementById('addEmployeeBtn').onclick = () => {
+  const name = document.getElementById('empName').value.trim();
+  const empPin = document.getElementById('empPin').value.trim();
+  const rate = Number(document.getElementById('empRate').value);
+  const err = document.getElementById('employeeError');
+  err.textContent = '';
+
+  if (!name) return err.textContent = 'Enter employee name.';
+  if (!/^\d{4,8}$/.test(empPin)) return err.textContent = 'PIN must be 4-8 digits.';
+  if (!Number.isFinite(rate) || rate < 0) return err.textContent = 'Enter a valid hourly rate.';
+
+  const employees = getEmployees();
+  if (employees.some(e => e.active && e.pin === empPin)) return err.textContent = 'That PIN is already assigned.';
+
+  employees.push({ id: crypto.randomUUID(), name, pin: empPin, rate, active: true });
+  setEmployees(employees);
+  document.getElementById('empName').value = '';
+  document.getElementById('empPin').value = '';
+  document.getElementById('empRate').value = '';
+  renderAdmin();
+};
+
+document.getElementById('exportBtn').onclick = () => {
+  const rows = weeklyRows();
+  let csv = 'Employee,Regular Hours,OT Hours,Total Hours,Hourly Rate,Estimated Gross\n';
+  csv += rows.map(r =>
+    `"${r.e.name.replaceAll('"','""')}",${r.regular.toFixed(2)},${r.ot.toFixed(2)},${r.total.toFixed(2)},${Number(r.e.rate).toFixed(2)},${r.gross.toFixed(2)}`
+  ).join('\n');
+
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Miramont_Payroll_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+document.getElementById('resetPrototypeBtn').onclick = () => {
+  if (!confirm('Reset all prototype employees and punch records?')) return;
+  localStorage.removeItem(EMPLOYEE_KEY);
+  localStorage.removeItem(PUNCH_KEY);
+  getEmployees();
+  renderAdmin();
+};
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+buildKeypad();
+renderPin();
+renderAction();
+getEmployees();
+</script>
+</body>
+</html>
