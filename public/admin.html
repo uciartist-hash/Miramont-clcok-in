@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Miramont Time Admin</title>
+<style>
+:root{--blue:#0e67aa;--soft:#eef7fd;--ink:#10213b;--muted:#69788c;--line:#e3ebf1;--bg:#f6f9fc;--green:#1d9b57;--greenSoft:#eaf8f0;--orange:#ef6b3d;--red:#c53b32;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink)}button,input,select{font:inherit}
+.shell{min-height:100vh;display:grid;grid-template-columns:250px 1fr}.sidebar{background:#fff;border-right:1px solid var(--line);padding:28px 20px;display:flex;flex-direction:column;height:100vh;position:sticky;top:0}.brand{font-size:28px;font-weight:900;letter-spacing:.045em;color:var(--blue)}.brandSub{margin-top:5px;font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--muted)}
+.nav{margin-top:34px;display:grid;gap:7px}.nav button{border:0;background:transparent;text-align:left;padding:12px 14px;border-radius:12px;font-weight:760;color:#405168;cursor:pointer}.nav button.active{background:var(--soft);color:var(--blue)}.sideBottom{margin-top:auto;font-size:12px;color:var(--muted)}
+.topbar{height:82px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}.pageTitle{font-size:27px;font-weight:900}.pageSub{font-size:13px;color:var(--muted);margin-top:4px}.topActions{display:flex;gap:10px}.btn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 14px;font-weight:800;cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:var(--red)}.main{padding:26px 30px 40px}.section{display:none}.section.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.metric,.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(28,67,99,.05)}.metric{padding:20px}.metricLabel{font-size:12px;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.metricValue{font-size:34px;font-weight:930;margin-top:10px}.metricHint{font-size:12px;color:var(--muted);margin-top:6px}
+.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.8fr);gap:18px;margin-top:18px}.panel{overflow:hidden}.panelHead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}.panelTitle{font-size:17px;font-weight:900}.panelSub{font-size:12px;color:var(--muted);margin-top:3px}.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.toolbar input,.toolbar select{padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th,td{padding:13px 16px;text-align:left;border-bottom:1px solid #edf1f4;font-size:13px}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}tbody tr:hover{background:#fafcfe}
+.status{display:inline-flex;gap:7px;align-items:center;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:850}.status.in{background:var(--greenSoft);color:var(--green)}.status.out{background:#eef2f5;color:#66758c}.dot{width:7px;height:7px;border-radius:50%;background:currentColor}.badge{font-size:11px;font-weight:850;border-radius:999px;padding:6px 9px}.badge.green{background:var(--greenSoft);color:var(--green)}.badge.gray{background:#eef2f5;color:#66758c}.badge.orange{background:#fff0e9;color:var(--orange)}
+.people{padding:8px 16px 16px}.person{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid #eef2f5}.personLeft{display:flex;gap:11px;align-items:center}.avatar{width:38px;height:38px;border-radius:50%;background:var(--soft);color:var(--blue);display:grid;place-items:center;font-weight:900}.personName{font-weight:850}.personMeta{font-size:11px;color:var(--muted);margin-top:2px}
+.empty{padding:44px;text-align:center;color:var(--muted)}.notice{margin-top:16px;padding:13px 15px;border:1px solid #f3dfaa;background:#fff9e9;border-radius:13px;font-size:13px;color:#725a1f}
+dialog{border:0;border-radius:20px;padding:0;width:min(580px,92vw);box-shadow:0 28px 90px rgba(0,0,0,.26)}dialog::backdrop{background:rgba(8,23,39,.42)}.modal{padding:26px}.modal h2{margin:0 0 18px}.field{margin-bottom:13px}.field label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px}.field input,.field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.modalActions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.err{color:var(--red);font-size:12px;font-weight:750;min-height:18px}
+.login{position:fixed;inset:0;background:rgba(8,23,39,.42);display:flex;align-items:center;justify-content:center;z-index:999}.loginCard{width:min(430px,90vw);background:#fff;border-radius:22px;padding:30px;box-shadow:0 26px 80px rgba(0,0,0,.25)}.loginCard input{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;margin:12px 0 8px}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.shell{grid-template-columns:210px 1fr}}
+
+.empWorkspace{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}
+.empListPanel,.empProfilePanel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(28,67,99,.05);overflow:hidden}
+.empListHead{padding:18px;border-bottom:1px solid var(--line)}
+.empListTitleRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.empSearch{width:100%;margin-top:13px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.empList{max-height:calc(100vh - 260px);overflow:auto}
+.empItem{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #edf1f4;cursor:pointer;transition:.15s}
+.empItem:hover{background:#f8fbfe}.empItem.active{background:var(--soft)}
+.empItemLeft{display:flex;align-items:center;gap:11px;min-width:0}
+.empAvatar{width:42px;height:42px;border-radius:50%;background:#eaf4ff;color:var(--blue);display:grid;place-items:center;font-weight:900;flex:0 0 auto}
+.empItemName{font-weight:900}.empItemMeta{font-size:11px;color:var(--muted);margin-top:3px}
+.empProfileTop{padding:22px 24px;border-bottom:1px solid var(--line)}
+.profileHero{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.profileIdentity{display:flex;gap:16px;align-items:center}
+.profileAvatar{width:72px;height:72px;border-radius:50%;background:#eaf4ff;color:var(--blue);display:grid;place-items:center;font-size:25px;font-weight:950}
+.profileName{font-size:29px;font-weight:950}.profileMeta{font-size:13px;color:var(--muted);margin-top:3px}
+.profileStatus{margin-top:8px}
+.profileFacts{display:flex;gap:34px;align-items:flex-start}.factValue{font-weight:900;font-size:15px}.factLabel{font-size:11px;color:var(--muted);margin-top:3px}
+.profileCards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px 24px;border-bottom:1px solid var(--line)}
+.profileCard{border:1px solid var(--line);border-radius:15px;padding:15px;background:#fff}.profileCardLabel{font-size:11px;color:var(--muted);font-weight:850}.profileCardValue{font-size:24px;font-weight:950;margin-top:6px}
+.profileTabs{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 24px;border-bottom:1px solid var(--line)}
+.profileTabSet{display:flex;gap:22px}.profileTab{padding:15px 0 12px;font-size:13px;font-weight:850;color:#5f6f84;border-bottom:3px solid transparent}.profileTab.active{color:var(--blue);border-color:var(--blue)}
+.weekNav{display:flex;align-items:center;gap:8px}.weekLabel{font-size:12px;font-weight:800;min-width:190px;text-align:center}
+.dayTable{width:100%;border-collapse:collapse}.dayTable th,.dayTable td{padding:13px 16px;border-bottom:1px solid #edf1f4}.dayRow{cursor:pointer}.dayRow:hover{background:#fafcfe}.dayRow.selected{background:#f3f9fe}
+.chev{font-weight:900;color:#73839a}.dayName{font-weight:900}.smallMuted{font-size:11px;color:var(--muted)}
+.punchDetail{margin:16px 24px 24px;border:1px solid var(--line);border-radius:15px;overflow:hidden}.punchDetailHead{padding:15px 17px;background:#fbfdff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.punchDetailTitle{font-weight:900}
+.profileEmpty{padding:70px 30px;text-align:center;color:var(--muted)}
+@media(max-width:1250px){.empWorkspace{grid-template-columns:290px 1fr}.profileCards{grid-template-columns:repeat(2,1fr)}}
+
+</style>
+</head>
+<body>
+<div class="login" id="login"><div class="loginCard"><div class="brand">MIRAMONT</div><div class="brandSub">TIME ADMIN</div><h2 style="margin-top:24px">Admin Access</h2><p style="font-size:13px;color:var(--muted)">Enter your admin PIN.</p><input id="loginPin" type="password" inputmode="numeric" placeholder="Admin PIN"><div class="err" id="loginErr"></div><button class="btn primary" id="loginBtn" style="width:100%">Open Admin Panel</button></div></div>
+
+<div class="shell">
+<aside class="sidebar"><div class="brand">MIRAMONT</div><div class="brandSub">TIME ADMIN</div><div class="nav">
+<button class="active" data-s="dashboard">Dashboard</button><button data-s="employees">Employees</button><button data-s="timecards">Timecards</button><button data-s="payroll">Payroll</button><button data-s="audit">Audit Log</button>
+</div><div class="sideBottom">Miramont Cabinetry<br>Workforce Time System</div></aside>
+
+<div><header class="topbar"><div><div class="pageTitle" id="pageTitle">Dashboard</div><div class="pageSub" id="pageSub">Live overview of the current work week</div></div><div class="topActions"><button class="btn" id="refreshBtn">Refresh</button><button class="btn primary" id="kioskBtn">Open Kiosk</button></div></header>
+<main class="main">
+<section class="section active" id="dashboard">
+<div class="cards"><div class="metric"><div class="metricLabel">Clocked In Now</div><div class="metricValue" id="mActive">—</div><div class="metricHint">Employees currently working</div></div><div class="metric"><div class="metricLabel">Weekly Hours</div><div class="metricValue" id="mHours">—</div><div class="metricHint">All employees</div></div><div class="metric"><div class="metricLabel">Overtime Hours</div><div class="metricValue" id="mOT">—</div><div class="metricHint">Hours above 40</div></div><div class="metric"><div class="metricLabel">Est. Gross Payroll</div><div class="metricValue" id="mGross">—</div><div class="metricHint">Current week</div></div></div>
+<div class="layout"><div class="panel"><div class="panelHead"><div><div class="panelTitle">Weekly Time Summary</div><div class="panelSub">Regular hours, overtime and estimated pay</div></div></div><div class="tableWrap"><table><thead><tr><th>Employee</th><th>Status</th><th>Regular</th><th>OT</th><th>Total</th><th>Rate</th><th>Gross</th></tr></thead><tbody id="dashRows"></tbody></table></div></div><div class="panel"><div class="panelHead"><div><div class="panelTitle">Employee Status</div><div class="panelSub">Current clock status</div></div></div><div class="people" id="dashPeople"></div></div></div>
+</section>
+
+<section class="section" id="employees">
+<div class="empWorkspace">
+  <div class="empListPanel">
+    <div class="empListHead">
+      <div class="empListTitleRow">
+        <div><div class="panelTitle">Employees</div><div class="panelSub">Select an employee to view details</div></div>
+        <button class="btn primary" id="addEmployeeBtn">+ Add</button>
+      </div>
+      <input class="empSearch" id="empSearch" placeholder="Search employees...">
+    </div>
+    <div class="empList" id="employeeList"></div>
+  </div>
+
+  <div class="empProfilePanel" id="employeeProfile">
+    <div class="profileEmpty">Select an employee to view their timecard.</div>
+  </div>
+</div>
+</section>
+
+<section class="section" id="timecards"><div class="panel"><div class="panelHead"><div><div class="panelTitle">Timecards</div><div class="panelSub">Review and correct employee punches</div></div><div class="toolbar"><select id="tcEmployee"><option value="">All Employees</option></select><input id="tcStart" type="date"><input id="tcEnd" type="date"><button class="btn" id="tcLoad">Load</button><button class="btn primary" id="addPunchBtn">+ Add Punch</button></div></div><div class="tableWrap"><table><thead><tr><th>Employee</th><th>Type</th><th>Date</th><th>Time</th><th></th></tr></thead><tbody id="punchRows"></tbody></table></div></div><div class="notice">Punch corrections affect payroll. Audit logging is the next step before production rollout.</div></section>
+
+<section class="section" id="payroll">
+<div class="panel">
+  <div class="panelHead">
+    <div>
+      <div class="panelTitle">Payroll</div>
+      <div class="panelSub">Regular hours, overtime and estimated gross pay</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="payPrevWeek">Previous Week</button>
+      <button class="btn" id="payThisWeek">This Week</button>
+      <input id="payStart" type="date">
+      <input id="payEnd" type="date">
+      <button class="btn" id="payLoad">Calculate</button>
+      <button class="btn primary" id="exportExcel">Export Excel</button>
+    </div>
+  </div>
+  <div class="tableWrap">
+    <table>
+      <thead><tr><th>Employee</th><th>Rate</th><th>Total Hrs</th><th>Regular</th><th>OT</th><th>Regular Pay</th><th>OT Pay</th><th>Gross</th></tr></thead>
+      <tbody id="payRows"></tbody>
+      <tfoot id="payFoot"></tfoot>
+    </table>
+  </div>
+</div>
+</section>
+
+<section class="section" id="audit"><div class="panel"><div class="empty"><h3>Audit Log</h3><p>Next: every employee and punch edit with old/new values and timestamp.</p></div></div></section>
+</main></div></div>
+
+<dialog id="employeeDialog"><div class="modal"><h2 id="employeeDialogTitle">Add Employee</h2><input id="empId" type="hidden"><div class="field"><label>Name</label><input id="empName"></div><div class="row2"><div class="field"><label>4-digit PIN</label><input id="empPin" inputmode="numeric" maxlength="4"></div><div class="field"><label>Hourly Rate</label><input id="empRate" type="number" step=".01" min="0"></div></div><div class="field"><label>Status</label><select id="empActive"><option value="true">Active</option><option value="false">Inactive</option></select></div><div class="err" id="empErr"></div><div class="modalActions"><button class="btn" id="empCancel">Cancel</button><button class="btn primary" id="empSave">Save Employee</button></div></div></dialog>
+
+<dialog id="punchDialog"><div class="modal"><h2 id="punchDialogTitle">Add Punch</h2><input id="punchId" type="hidden"><div class="field"><label>Employee</label><select id="punchEmployee"></select></div><div class="row2"><div class="field"><label>Type</label><select id="punchType"><option value="clockIn">Clock In</option><option value="clockOut">Clock Out</option></select></div><div class="field">
+  <label>Date & Time</label>
+  <input id="punchAt" type="datetime-local">
+  <div id="punchFriendlyDate" class="smallMuted" style="margin-top:7px;font-weight:700"></div>
+</div></div><div class="err" id="punchErr"></div><div class="modalActions"><button class="btn danger" id="punchDelete" style="margin-right:auto;display:none">Delete</button><button class="btn" id="punchCancel">Cancel</button><button class="btn primary" id="punchSave">Save Punch</button></div></div></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>
+const U="https://kmggowfrdezocrycxabz.supabase.co",K="sb_publishable_DCZAcI8FhaLAlfm3CsoD9A_VmgwAPvu";
+let ADMIN_PIN="",employees=[],payrollData=[],selectedEmployeeId=null,profileWeekStart=null,selectedProfileDay=null;
+const H=()=>({apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json"});
+async function rpc(n,b={}){const r=await fetch(`${U}/rest/v1/rpc/${n}`,{method:"POST",headers:H(),body:JSON.stringify(b)});const t=await r.text();let d;try{d=t?JSON.parse(t):null}catch{d=t}if(!r.ok)throw new Error(d?.message||d?.hint||d?.details||t||`HTTP ${r.status}`);return d}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const num=v=>Number(v||0),money=v=>num(v).toLocaleString(undefined,{style:"currency",currency:"USD"});
+const isIn=s=>String(s||"").toLowerCase().includes("clocked in");
+const initials=n=>String(n||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+const localDate=d=>new Date(d).toLocaleDateString(),localTime=d=>new Date(d).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+const isoLocal=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,16)};
+function weekRange(){const d=new Date(),day=(d.getDay()+6)%7,m=new Date(d);m.setDate(d.getDate()-day);const e=new Date(m);e.setDate(m.getDate()+6);return[m.toISOString().slice(0,10),e.toISOString().slice(0,10)]}
+
+async function loginAdmin(){loginErr.textContent="";try{const p=loginPin.value;const ok=await rpc("admin_check_pin",{p_admin_pin:p});if(!ok)throw new Error("Incorrect admin PIN");ADMIN_PIN=p;login.style.display="none";await loadEmployees();await loadDashboard()}catch(e){loginErr.textContent=e.message}}
+loginBtn.onclick=loginAdmin;loginPin.addEventListener("keydown",e=>{if(e.key==="Enter")loginAdmin()});
+
+async function loadEmployees(){
+  employees=await rpc("admin_list_employees",{p_admin_pin:ADMIN_PIN});
+  renderEmployeeList();
+  fillEmployeeSelects();
+  if(!selectedEmployeeId && employees.length) selectedEmployeeId=employees[0].id;
+  if(selectedEmployeeId && document.querySelector("#employees.section.active")) await loadEmployeeProfile(selectedEmployeeId);
+}
+function fillEmployeeSelects(){
+  const o=employees.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join("");
+  tcEmployee.innerHTML=`<option value="">All Employees</option>`+o;
+  punchEmployee.innerHTML=o;
+}
+function renderEmployeeList(){
+  const q=(empSearch?.value||"").trim().toLowerCase();
+  const list=employees.filter(e=>e.name.toLowerCase().includes(q));
+  employeeList.innerHTML=list.map(e=>{
+    const i=isIn(e.current_status);
+    return `<div class="empItem ${e.id===selectedEmployeeId?"active":""}" onclick="selectEmployee('${e.id}')">
+      <div class="empItemLeft">
+        <div class="empAvatar">${esc(initials(e.name))}</div>
+        <div><div class="empItemName">${esc(e.name)}</div><div class="empItemMeta">${money(e.hourly_rate)} / hr</div></div>
+      </div>
+      <span class="badge ${i?"green":"gray"}">${i?"Clocked In":"Clocked Out"}</span>
+    </div>`;
+  }).join("")||`<div class="empty">No employees found.</div>`;
+}
+
+function mondayOf(d){
+  const x=new Date(d); x.setHours(12,0,0,0);
+  const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day);
+  return x;
+}
+function ymd(d){
+  const x=new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset());
+  return x.toISOString().slice(0,10);
+}
+function fmtWeek(start){
+  const s=new Date(start),e=new Date(start);e.setDate(e.getDate()+6);
+  const opt={month:"short",day:"numeric",year:"numeric"};
+  return `${s.toLocaleDateString(undefined,opt)} – ${e.toLocaleDateString(undefined,opt)}`;
+}
+function durationLabel(hours){
+  const mins=Math.max(0,Math.round(Number(hours||0)*60));
+  return `${Math.floor(mins/60)}h ${String(mins%60).padStart(2,"0")}m`;
+}
+function computeDaily(punches,start){
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(start);d.setDate(d.getDate()+i);
+    days.push({key:ymd(d),date:d,punches:[],hours:0,open:false});
+  }
+  const map=Object.fromEntries(days.map(d=>[d.key,d]));
+  punches.forEach(p=>{
+    const key=ymd(new Date(p.punched_at));
+    if(map[key]) map[key].punches.push(p);
+  });
+  days.forEach(day=>{
+    day.punches.sort((a,b)=>new Date(a.punched_at)-new Date(b.punched_at));
+    day.incomplete=false;
+    for(let i=0;i<day.punches.length;i++){
+      const p=day.punches[i];
+      const n=day.punches[i+1];
+
+      if(p.punch_type==="clockIn" && n && n.punch_type==="clockOut"){
+        day.hours+=(new Date(n.punched_at)-new Date(p.punched_at))/3600000;
+        i++;
+        continue;
+      }
+
+      const now=new Date();
+      if(p.punch_type==="clockIn" && !n && ymd(now)===day.key && new Date(p.punched_at)<=now){
+        day.hours+=(now-new Date(p.punched_at))/3600000;
+        day.open=true;
+      }else{
+        day.incomplete=true;
+      }
+    }
+  });
+  return days;
+}
+async function selectEmployee(id){
+  selectedEmployeeId=id;
+  renderEmployeeList();
+  profileWeekStart=profileWeekStart||mondayOf(new Date());
+  selectedProfileDay=null;
+  await loadEmployeeProfile(id);
+}
+window.selectEmployee=selectEmployee;
+
+async function loadEmployeeProfile(id){
+  const e=employees.find(x=>x.id===id); if(!e)return;
+  if(!profileWeekStart) profileWeekStart=mondayOf(new Date());
+  const end=new Date(profileWeekStart);end.setDate(end.getDate()+6);
+  const punches=await rpc("admin_list_punches",{p_admin_pin:ADMIN_PIN,p_start_date:ymd(profileWeekStart),p_end_date:ymd(end),p_employee_id:id});
+  const days=computeDaily(punches,profileWeekStart);
+  const total=days.reduce((a,d)=>a+d.hours,0);
+  const regular=Math.min(total,40),ot=Math.max(total-40,0);
+  const gross=regular*num(e.hourly_rate)+ot*num(e.hourly_rate)*1.5;
+  if(!selectedProfileDay) selectedProfileDay=days.find(d=>d.punches.length)?.key||days[0].key;
+
+  employeeProfile.innerHTML=`
+    <div class="empProfileTop">
+      <div class="profileHero">
+        <div class="profileIdentity">
+          <div class="profileAvatar">${esc(initials(e.name))}</div>
+          <div>
+            <div class="profileName">${esc(e.name)}</div>
+            <div class="profileMeta">PIN #${esc(e.pin)}</div>
+            <div class="profileStatus"><span class="badge ${isIn(e.current_status)?"green":"gray"}">${isIn(e.current_status)?"Clocked In":"Clocked Out"}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:flex-start">
+          <div class="profileFacts">
+            <div><div class="factValue">${money(e.hourly_rate)}</div><div class="factLabel">Hourly Rate</div></div>
+            <div><div class="factValue">${e.active?"Active":"Inactive"}</div><div class="factLabel">Employment Status</div></div>
+          </div>
+          <button class="btn" onclick="editEmployee('${e.id}')">Edit Employee</button>
+        </div>
+      </div>
+    </div>
+    <div class="profileCards">
+      <div class="profileCard"><div class="profileCardLabel">THIS WEEK</div><div class="profileCardValue">${durationLabel(total)}</div></div>
+      <div class="profileCard"><div class="profileCardLabel">REGULAR HOURS</div><div class="profileCardValue">${durationLabel(regular)}</div></div>
+      <div class="profileCard"><div class="profileCardLabel">OVERTIME</div><div class="profileCardValue">${durationLabel(ot)}</div></div>
+      <div class="profileCard"><div class="profileCardLabel">ESTIMATED GROSS</div><div class="profileCardValue">${money(gross)}</div></div>
+    </div>
+    <div class="profileTabs">
+      <div class="profileTabSet"><div class="profileTab active">Weekly Breakdown</div><div class="profileTab">Punch History</div><div class="profileTab">Pay Summary</div></div>
+      <div class="weekNav">
+        <button class="btn" onclick="shiftProfileWeek(-7)">‹</button>
+        <div class="weekLabel">${fmtWeek(profileWeekStart)}</div>
+        <button class="btn" onclick="shiftProfileWeek(7)">›</button>
+      </div>
+    </div>
+    <div class="tableWrap">
+      <table class="dayTable"><thead><tr><th></th><th>Day</th><th>Date</th><th>Total Hours</th><th>Regular</th><th>Overtime</th><th>Status</th></tr></thead>
+      <tbody>
+      ${days.map(d=>{
+        const reg=Math.min(d.hours,Math.max(0,40-days.slice(0,days.indexOf(d)).reduce((a,x)=>a+x.hours,0)));
+        const overtime=Math.max(0,d.hours-reg);
+        const status=d.open?"Open Shift":(d.incomplete?"Incomplete":(d.punches.length?"Complete":"No Punches"));
+        return `<tr class="dayRow ${d.key===selectedProfileDay?"selected":""}" onclick="selectProfileDay('${d.key}')">
+          <td class="chev">›</td><td class="dayName">${d.date.toLocaleDateString(undefined,{weekday:"long"})}</td>
+          <td>${d.date.toLocaleDateString()}</td><td><strong>${durationLabel(d.hours)}</strong></td>
+          <td>${durationLabel(reg)}</td><td>${durationLabel(overtime)}</td>
+          <td><span class="badge ${d.open||d.incomplete?"orange":d.punches.length?"green":"gray"}">${status}</span></td>
+        </tr>`;
+      }).join("")}
+      </tbody></table>
+    </div>
+    ${renderProfilePunchDetail(days.find(d=>d.key===selectedProfileDay),e)}
+  `;
+}
+function renderProfilePunchDetail(day,e){
+  if(!day)return "";
+  return `<div class="punchDetail">
+    <div class="punchDetailHead">
+      <div><div class="punchDetailTitle">${day.date.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</div><div class="smallMuted">${durationLabel(day.hours)} total</div></div>
+      <button class="btn primary" onclick="openProfileAddPunch('${e.id}','${day.key}')">+ Add Punch</button>
+    </div>
+    <div class="tableWrap"><table><thead><tr><th>#</th><th>Time</th><th>Type</th><th>Actions</th></tr></thead><tbody>
+      ${day.punches.map((p,i)=>`<tr><td>${i+1}</td><td>${localTime(p.punched_at)}</td><td><span class="badge ${p.punch_type==="clockIn"?"green":"orange"}">${p.punch_type==="clockIn"?"Clock In":"Clock Out"}</span></td><td><button class="btn" data-p='${JSON.stringify(p).replaceAll("'","&#39;")}' onclick="editPunch(this)">Edit</button></td></tr>`).join("")||`<tr><td colspan="4">No punches for this day.</td></tr>`}
+    </tbody></table></div>
+  </div>`;
+}
+window.shiftProfileWeek=async days=>{profileWeekStart=new Date(profileWeekStart);profileWeekStart.setDate(profileWeekStart.getDate()+days);selectedProfileDay=null;await loadEmployeeProfile(selectedEmployeeId)};
+window.selectProfileDay=async key=>{selectedProfileDay=key;await loadEmployeeProfile(selectedEmployeeId)};
+
+function updatePunchFriendlyDate(){
+  if(!punchAt.value){
+    punchFriendlyDate.textContent="";
+    return;
+  }
+  const d=new Date(punchAt.value);
+  punchFriendlyDate.textContent=d.toLocaleString(undefined,{
+    weekday:"long",
+    month:"short",
+    day:"numeric",
+    year:"numeric",
+    hour:"numeric",
+    minute:"2-digit"
+  });
+}
+punchAt.addEventListener("input",updatePunchFriendlyDate);
+window.openProfileAddPunch=async(employeeId,key)=>{
+  punchDialogTitle.textContent="Add Punch";
+  punchId.value="";
+  punchEmployee.disabled=false;
+  punchEmployee.value=employeeId;
+  punchDelete.style.display="none";
+  punchErr.textContent="";
+
+  // Always start from the exact day the user clicked.
+  const selectedDayKey=key;
+
+  try{
+    const dayPunches=await rpc("admin_list_punches",{
+      p_admin_pin:ADMIN_PIN,
+      p_start_date:selectedDayKey,
+      p_end_date:selectedDayKey,
+      p_employee_id:employeeId
+    });
+
+    dayPunches.sort((a,b)=>new Date(a.punched_at)-new Date(b.punched_at));
+    const last=dayPunches[dayPunches.length-1];
+
+    if(!last){
+      punchType.value="clockIn";
+      punchAt.value=selectedDayKey+"T08:00";
+    }else{
+      const nextType=last.punch_type==="clockIn"?"clockOut":"clockIn";
+      punchType.value=nextType;
+
+      const lastDate=new Date(last.punched_at);
+      const now=new Date();
+      let suggested;
+
+      // Today: suggest now if it is later than the last punch.
+      if(ymd(now)===selectedDayKey && now>lastDate){
+        suggested=now;
+      }else{
+        // Historical day: suggest one hour after last punch,
+        // but force the calendar date to remain on the selected day.
+        suggested=new Date(lastDate.getTime()+60*60*1000);
+      }
+
+      const suggestedKey=ymd(suggested);
+      if(suggestedKey!==selectedDayKey){
+        punchAt.value=selectedDayKey+"T08:00";
+      }else{
+        punchAt.value=isoLocal(suggested);
+      }
+    }
+  }catch(e){
+    punchType.value="clockIn";
+    punchAt.value=selectedDayKey+"T08:00";
+    punchErr.textContent="Could not read existing punches: "+e.message;
+  }
+
+  updatePunchFriendlyDate();
+  punchDialog.showModal();
+};
+addEmployeeBtn.onclick=()=>{employeeDialogTitle.textContent="Add Employee";empId.value="";empName.value="";empPin.value="";empRate.value="";empActive.value="true";empErr.textContent="";employeeDialog.showModal()};
+empSearch.addEventListener("input",renderEmployeeList);
+window.editEmployee=id=>{const e=employees.find(x=>x.id===id);if(!e)return;employeeDialogTitle.textContent="Edit Employee";empId.value=e.id;empName.value=e.name;empPin.value=e.pin;empRate.value=e.hourly_rate;empActive.value=String(e.active);empErr.textContent="";employeeDialog.showModal()};
+empCancel.onclick=()=>employeeDialog.close();empSave.onclick=async()=>{empErr.textContent="";try{await rpc("admin_save_employee",{p_admin_pin:ADMIN_PIN,p_employee_id:empId.value||null,p_name:empName.value,p_pin:empPin.value,p_hourly_rate:Number(empRate.value),p_active:empActive.value==="true"});employeeDialog.close();await loadEmployees();await loadDashboard();if(selectedEmployeeId)await loadEmployeeProfile(selectedEmployeeId)}catch(e){empErr.textContent=e.message}};
+
+async function loadDashboard(){try{const a=await rpc("weekly_summary");mActive.textContent=a.filter(r=>isIn(r.current_status)).length;mHours.textContent=a.reduce((x,r)=>x+num(r.total_hours),0).toFixed(1);mOT.textContent=a.reduce((x,r)=>x+num(r.overtime_hours),0).toFixed(1);mGross.textContent=money(a.reduce((x,r)=>x+num(r.estimated_gross),0));dashRows.innerHTML=a.map(r=>{const i=isIn(r.current_status);return`<tr><td><strong>${esc(r.employee_name)}</strong></td><td><span class="status ${i?"in":"out"}"><span class="dot"></span>${i?"Clocked In":"Clocked Out"}</span></td><td>${num(r.regular_hours).toFixed(2)}</td><td>${num(r.overtime_hours).toFixed(2)}</td><td><strong>${num(r.total_hours).toFixed(2)}</strong></td><td>${money(r.hourly_rate)}</td><td><strong>${money(r.estimated_gross)}</strong></td></tr>`}).join("");dashPeople.innerHTML=a.map(r=>{const i=isIn(r.current_status);return`<div class="person"><div class="personLeft"><div class="avatar">${initials(r.employee_name)}</div><div><div class="personName">${esc(r.employee_name)}</div><div class="personMeta">${num(r.total_hours).toFixed(2)} hrs this week</div></div></div><span class="badge ${i?"green":"gray"}">${i?"Clocked In":"Clocked Out"}</span></div>`}).join("")}catch(e){dashRows.innerHTML=`<tr><td colspan="7" style="color:var(--red)">${esc(e.message)}</td></tr>`}}
+
+async function loadPunches(){try{const a=await rpc("admin_list_punches",{p_admin_pin:ADMIN_PIN,p_start_date:tcStart.value,p_end_date:tcEnd.value,p_employee_id:tcEmployee.value||null});punchRows.innerHTML=a.map(p=>`<tr><td><strong>${esc(p.employee_name)}</strong></td><td><span class="badge ${p.punch_type==="clockIn"?"green":"orange"}">${p.punch_type==="clockIn"?"Clock In":"Clock Out"}</span></td><td>${localDate(p.punched_at)}</td><td>${localTime(p.punched_at)}</td><td><button class="btn" data-p='${JSON.stringify(p).replaceAll("'","&#39;")}' onclick="editPunch(this)">Edit</button></td></tr>`).join("")||`<tr><td colspan="5">No punches in this range.</td></tr>`}catch(e){punchRows.innerHTML=`<tr><td colspan="5" style="color:var(--red)">${esc(e.message)}</td></tr>`}}
+tcLoad.onclick=loadPunches;addPunchBtn.onclick=()=>{punchDialogTitle.textContent="Add Punch";punchId.value="";punchEmployee.disabled=false;punchEmployee.value=employees[0]?.id||"";punchType.value="clockIn";punchAt.value=isoLocal(new Date());punchDelete.style.display="none";punchErr.textContent="";punchDialog.showModal()};
+window.editPunch=b=>{const p=JSON.parse(b.dataset.p);punchDialogTitle.textContent="Edit Punch";punchId.value=p.punch_id;punchEmployee.value=p.employee_id;punchEmployee.disabled=true;punchType.value=p.punch_type;punchAt.value=isoLocal(p.punched_at);punchDelete.style.display="inline-block";punchErr.textContent="";updatePunchFriendlyDate();punchDialog.showModal()};
+punchCancel.onclick=()=>punchDialog.close();
+function atlantaDateKey(dateObj){
+  const parts=new Intl.DateTimeFormat("en-CA",{
+    timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"
+  }).formatToParts(dateObj);
+  const get=t=>parts.find(p=>p.type===t)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+function isHistoricalAdminDate(dateObj){
+  return atlantaDateKey(dateObj)<atlantaDateKey(new Date());
+}
+punchSave.onclick=async()=>{
+  punchErr.textContent="";
+  try{
+    const whenDate=new Date(punchAt.value);
+    const when=whenDate.toISOString();
+
+    if(punchId.value){
+      await rpc("admin_update_punch",{
+        p_admin_pin:ADMIN_PIN,
+        p_punch_id:punchId.value,
+        p_punch_type:punchType.value,
+        p_punched_at:when
+      });
+    }else{
+      const rpcName=isHistoricalAdminDate(whenDate)
+        ?"admin_add_historical_punch"
+        :"admin_add_punch";
+
+      await rpc(rpcName,{
+        p_admin_pin:ADMIN_PIN,
+        p_employee_id:punchEmployee.value,
+        p_punch_type:punchType.value,
+        p_punched_at:when
+      });
+    }
+
+    punchDialog.close();
+    await loadPunches();
+    await loadDashboard();
+    if(selectedEmployeeId) await loadEmployeeProfile(selectedEmployeeId);
+  }catch(e){
+    punchErr.textContent=e.message;
+  }
+};
+punchDelete.onclick=async()=>{if(!confirm("Delete this punch?"))return;try{await rpc("admin_delete_punch",{p_admin_pin:ADMIN_PIN,p_punch_id:punchId.value});punchDialog.close();await loadPunches();await loadDashboard();if(selectedEmployeeId)await loadEmployeeProfile(selectedEmployeeId)}catch(e){punchErr.textContent=e.message}};
+
+async function loadPayroll(){try{payrollData=await rpc("admin_payroll",{p_admin_pin:ADMIN_PIN,p_start_date:payStart.value,p_end_date:payEnd.value});payRows.innerHTML=payrollData.map(r=>`<tr><td><strong>${esc(r.employee_name)}</strong></td><td>${money(r.hourly_rate)}</td><td><strong>${num(r.total_hours).toFixed(2)}</strong></td><td>${num(r.regular_hours).toFixed(2)}</td><td>${num(r.overtime_hours).toFixed(2)}</td><td>${money(r.regular_pay)}</td><td>${money(r.overtime_pay)}</td><td><strong>${money(r.estimated_gross)}</strong></td></tr>`).join("")||`<tr><td colspan="8">No payroll data.</td></tr>`;const gross=payrollData.reduce((a,r)=>a+num(r.estimated_gross),0),hrs=payrollData.reduce((a,r)=>a+num(r.total_hours),0);payFoot.innerHTML=`<tr><th colspan="2">TOTAL</th><th>${hrs.toFixed(2)}</th><th colspan="4"></th><th>${money(gross)}</th></tr>`}catch(e){payRows.innerHTML=`<tr><td colspan="8" style="color:var(--red)">${esc(e.message)}</td></tr>`}}
+payLoad.onclick=loadPayroll;
+
+function setPayrollRange(which){
+  const now=new Date();
+  const monday=mondayOf(now);
+  if(which==="previous") monday.setDate(monday.getDate()-7);
+  const sunday=new Date(monday); sunday.setDate(sunday.getDate()+6);
+  payStart.value=ymd(monday);
+  payEnd.value=ymd(sunday);
+  loadPayroll();
+}
+payThisWeek.onclick=()=>setPayrollRange("this");
+payPrevWeek.onclick=()=>setPayrollRange("previous");
+
+function excelDateLabel(iso){
+  const d=new Date(iso+"T12:00:00");
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+}
+function excelTimeLabel(ts){
+  return new Date(ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+}
+function excelDayLabel(ts){
+  return new Date(ts).toLocaleDateString(undefined,{weekday:"long"});
+}
+function styleExcelHeader(row,fill){
+  row.height=24;
+  row.eachCell(cell=>{
+    cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:fill}};
+    cell.font={bold:true,color:{argb:"FFFFFFFF"},size:11};
+    cell.alignment={vertical:"middle",horizontal:"center"};
+    cell.border={bottom:{style:"thin",color:{argb:"FFD9E2EA"}}};
+  });
+}
+function styleExcelBody(ws,startRow,endRow,colCount){
+  for(let r=startRow;r<=endRow;r++){
+    const row=ws.getRow(r);
+    row.height=21;
+    for(let c=1;c<=colCount;c++){
+      const cell=row.getCell(c);
+      cell.alignment={vertical:"middle",horizontal:c===1?"left":"center"};
+      cell.border={bottom:{style:"hair",color:{argb:"FFE9EEF3"}}};
+      if(r%2===0) cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8FBFD"}};
+    }
+  }
+}
+
+async function exportPayrollExcel(){
+  if(!payrollData.length) await loadPayroll();
+  if(!payrollData.length){alert("No payroll data to export.");return}
+  if(typeof ExcelJS==="undefined"){alert("Excel export library could not load. Check internet connection and refresh.");return}
+
+  exportExcel.disabled=true;
+  exportExcel.textContent="Building Excel...";
+  try{
+    const punches=await rpc("admin_list_punches",{
+      p_admin_pin:ADMIN_PIN,
+      p_start_date:payStart.value,
+      p_end_date:payEnd.value,
+      p_employee_id:null
+    });
+
+    const wb=new ExcelJS.Workbook();
+    wb.creator="Miramont Cabinetry";
+    wb.company="Miramont Cabinetry";
+    wb.created=new Date();
+
+    // ----- Payroll Summary -----
+    const ws=wb.addWorksheet("Payroll Summary",{
+      views:[{state:"frozen",ySplit:5}]
+    });
+    ws.properties.defaultRowHeight=20;
+    ws.mergeCells("A1:H1");
+    ws.getCell("A1").value="MIRAMONT CABINETRY";
+    ws.getCell("A1").font={bold:true,size:20,color:{argb:"FF0E67AA"}};
+    ws.getCell("A1").alignment={vertical:"middle",horizontal:"left"};
+    ws.getRow(1).height=30;
+
+    ws.mergeCells("A2:H2");
+    ws.getCell("A2").value="WEEKLY PAYROLL REPORT";
+    ws.getCell("A2").font={bold:true,size:14,color:{argb:"FF10213B"}};
+
+    ws.mergeCells("A3:H3");
+    ws.getCell("A3").value=`Pay Period: ${excelDateLabel(payStart.value)} – ${excelDateLabel(payEnd.value)}`;
+    ws.getCell("A3").font={italic:true,size:11,color:{argb:"FF69788C"}};
+
+    ws.mergeCells("A4:H4");
+    ws.getCell("A4").value=`Generated: ${new Date().toLocaleString()}`;
+    ws.getCell("A4").font={size:10,color:{argb:"FF8A98A9"}};
+
+    const summaryHeaders=["Employee","Hourly Rate","Total Hours","Regular Hours","OT Hours","Regular Pay","OT Pay","Gross Pay"];
+    const hr=ws.getRow(5); summaryHeaders.forEach((h,i)=>hr.getCell(i+1).value=h);
+    styleExcelHeader(hr,"FF0E67AA");
+
+    payrollData.forEach((r,i)=>{
+      const row=ws.getRow(6+i);
+      row.values=[
+        r.employee_name,
+        num(r.hourly_rate),
+        num(r.total_hours),
+        num(r.regular_hours),
+        num(r.overtime_hours),
+        num(r.regular_pay),
+        num(r.overtime_pay),
+        num(r.estimated_gross)
+      ];
+      if(num(r.overtime_hours)>0){
+        row.getCell(5).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFFE8DC"}};
+        row.getCell(5).font={bold:true,color:{argb:"FFEF6B3D"}};
+      }
+    });
+
+    const dataEnd=5+payrollData.length;
+    styleExcelBody(ws,6,dataEnd,8);
+
+    ws.getColumn(1).width=24;
+    ws.getColumn(2).width=14;
+    ws.getColumn(3).width=14;
+    ws.getColumn(4).width=16;
+    ws.getColumn(5).width=12;
+    ws.getColumn(6).width=16;
+    ws.getColumn(7).width=14;
+    ws.getColumn(8).width=16;
+
+    ws.getColumn(2).numFmt='"$"#,##0.00';
+    ws.getColumn(3).numFmt='0.00';
+    ws.getColumn(4).numFmt='0.00';
+    ws.getColumn(5).numFmt='0.00';
+    ws.getColumn(6).numFmt='"$"#,##0.00';
+    ws.getColumn(7).numFmt='"$"#,##0.00';
+    ws.getColumn(8).numFmt='"$"#,##0.00';
+
+    const totalRow=ws.getRow(dataEnd+2);
+    totalRow.getCell(1).value="TOTAL PAYROLL";
+    totalRow.getCell(3).value=payrollData.reduce((a,r)=>a+num(r.total_hours),0);
+    totalRow.getCell(4).value=payrollData.reduce((a,r)=>a+num(r.regular_hours),0);
+    totalRow.getCell(5).value=payrollData.reduce((a,r)=>a+num(r.overtime_hours),0);
+    totalRow.getCell(6).value=payrollData.reduce((a,r)=>a+num(r.regular_pay),0);
+    totalRow.getCell(7).value=payrollData.reduce((a,r)=>a+num(r.overtime_pay),0);
+    totalRow.getCell(8).value=payrollData.reduce((a,r)=>a+num(r.estimated_gross),0);
+    totalRow.height=26;
+    totalRow.eachCell(cell=>{
+      cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFEAF4FF"}};
+      cell.font={bold:true,color:{argb:"FF10213B"}};
+      cell.border={top:{style:"medium",color:{argb:"FF0E67AA"}}};
+    });
+    totalRow.getCell(3).numFmt="0.00";totalRow.getCell(4).numFmt="0.00";totalRow.getCell(5).numFmt="0.00";
+    totalRow.getCell(6).numFmt='"$"#,##0.00';totalRow.getCell(7).numFmt='"$"#,##0.00';totalRow.getCell(8).numFmt='"$"#,##0.00';
+    ws.autoFilter={from:"A5",to:`H${dataEnd}`};
+
+    // ----- Detailed Timecards -----
+    const dt=wb.addWorksheet("Detailed Timecards",{views:[{state:"frozen",ySplit:5}]});
+    dt.mergeCells("A1:F1");
+    dt.getCell("A1").value="MIRAMONT CABINETRY";
+    dt.getCell("A1").font={bold:true,size:20,color:{argb:"FF0E67AA"}};
+    dt.getRow(1).height=30;
+
+    dt.mergeCells("A2:F2");
+    dt.getCell("A2").value="DETAILED TIMECARDS";
+    dt.getCell("A2").font={bold:true,size:14,color:{argb:"FF10213B"}};
+
+    dt.mergeCells("A3:F3");
+    dt.getCell("A3").value=`Pay Period: ${excelDateLabel(payStart.value)} – ${excelDateLabel(payEnd.value)}`;
+    dt.getCell("A3").font={italic:true,size:11,color:{argb:"FF69788C"}};
+
+    dt.mergeCells("A4:F4");
+    dt.getCell("A4").value="Raw punch history for payroll review";
+    dt.getCell("A4").font={size:10,color:{argb:"FF8A98A9"}};
+
+    const detailHeaders=["Employee","Day","Date","Time","Punch Type","Record ID"];
+    const dhr=dt.getRow(5);detailHeaders.forEach((h,i)=>dhr.getCell(i+1).value=h);
+    styleExcelHeader(dhr,"FF173B63");
+
+    punches.forEach((p,i)=>{
+      const row=dt.getRow(6+i);
+      const dateObj=new Date(p.punched_at);
+      row.values=[
+        p.employee_name,
+        excelDayLabel(p.punched_at),
+        dateObj,
+        dateObj,
+        p.punch_type==="clockIn"?"Clock In":"Clock Out",
+        p.punch_id
+      ];
+      const typeCell=row.getCell(5);
+      if(p.punch_type==="clockIn"){
+        typeCell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFEAF8F0"}};
+        typeCell.font={bold:true,color:{argb:"FF1D9B57"}};
+      }else{
+        typeCell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFFF0E9"}};
+        typeCell.font={bold:true,color:{argb:"FFEF6B3D"}};
+      }
+    });
+
+    const detailEnd=5+punches.length;
+    if(punches.length) styleExcelBody(dt,6,detailEnd,6);
+    dt.getColumn(1).width=24;
+    dt.getColumn(2).width=14;
+    dt.getColumn(3).width=15;
+    dt.getColumn(4).width=13;
+    dt.getColumn(5).width=14;
+    dt.getColumn(6).width=38;
+    dt.getColumn(3).numFmt="mm/dd/yyyy";
+    dt.getColumn(4).numFmt="h:mm AM/PM";
+    if(punches.length) dt.autoFilter={from:"A5",to:`F${detailEnd}`};
+
+    const buffer=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`Miramont_Payroll_${payStart.value}_to_${payEnd.value}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }catch(e){
+    alert("Excel export failed: "+e.message);
+  }finally{
+    exportExcel.disabled=false;
+    exportExcel.textContent="Export Excel";
+  }
+}
+exportExcel.onclick=exportPayrollExcel;
+
+const [ws,we]=weekRange();tcStart.value=payStart.value=ws;tcEnd.value=payEnd.value=we;kioskBtn.onclick=()=>window.open("/","_blank");
+refreshBtn.onclick=async()=>{const s=document.querySelector(".section.active").id;if(s==="dashboard")await loadDashboard();if(s==="employees")await loadEmployees();if(s==="timecards")await loadPunches();if(s==="payroll")await loadPayroll()};
+const meta={dashboard:["Dashboard","Live overview of the current work week"],employees:["Employees","Employee profiles, weekly hours and punch details"],timecards:["Timecards","Review and correct employee punches"],payroll:["Payroll","Calculate hours, overtime and estimated pay"],audit:["Audit Log","Track every administrative change"]};
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.s));pageTitle.textContent=meta[b.dataset.s][0];pageSub.textContent=meta[b.dataset.s][1];if(b.dataset.s==="dashboard"){await loadEmployees();await loadDashboard()}if(b.dataset.s==="employees")await loadEmployees();if(b.dataset.s==="timecards"){await loadEmployees();await loadPunches()}if(b.dataset.s==="payroll")await loadPayroll()});
+</script></body></html>
